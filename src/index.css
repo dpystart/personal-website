@@ -1,0 +1,86 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 100, 100, 0.35);
+}
+
+/* 深色侧边栏菜单样式 */
+.ant-layout-sider .ant-menu-dark {
+  background: transparent !important;
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-item {
+  border-radius: 10px !important;
+  margin: 4px 0 !important;
+  height: 44px !important;
+  line-height: 44px !important;
+}
+
+.ant-layout-sider .ant-menu-dark .ant-menu-item-selected {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.2) 0%, rgba(167, 139, 250, 0.15) 100%) !important;
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.1);
+}
+
+/* 卡片动效 */
+.ant-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 12px !important;
+}
+
+.ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Tabs 样式优化 */
+.ant-tabs-tab {
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+}
+
+/* Button 微调 */
+.ant-btn-primary {
+  box-shadow: 0 2px 8px rgba(64, 150, 255, 0.3);
+}
+
+/* 输入框聚焦效果 */
+.ant-input:focus,
+.ant-input-affix-wrapper-focused {
+  box-shadow: 0 0 0 3px rgba(64, 150, 255, 0.1) !important;
+}
+
+/* Tag 过渡 */
+.ant-tag {
+  transition: all 0.2s;
+}
+
+.ant-tag:hover {
+  transform: scale(1.05);
+}

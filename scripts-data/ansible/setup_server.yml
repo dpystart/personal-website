@@ -1,0 +1,16 @@
+---
+- name: Setup server
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        name:
+          - docker.io
+          - nginx
+        state: present
+    - name: Start docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
