@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Switch, theme } from 'antd'
 import {
-  DiffOutlined,
   FileImageOutlined,
   ToolOutlined,
   ClockCircleOutlined,
@@ -22,9 +21,8 @@ interface AppLayoutProps {
 }
 
 const menuItems = [
-  { key: '/text-diff', icon: <DiffOutlined />, label: '文本对比' },
-  { key: '/ocr', icon: <FileImageOutlined />, label: '图片转文字' },
   { key: '/text-tools', icon: <ToolOutlined />, label: '文本工具' },
+  { key: '/ocr', icon: <FileImageOutlined />, label: '图片转文字' },
   { key: '/crontab', icon: <ClockCircleOutlined />, label: 'Crontab' },
   { key: '/scripts', icon: <CodeOutlined />, label: '脚本管理' },
 ]
@@ -43,7 +41,10 @@ export default function AppLayout({ children, isDark, onThemeChange }: AppLayout
         collapsed={collapsed}
         onCollapse={setCollapsed}
         trigger={null}
-        width={260}
+        width={220}
+        breakpoint="lg"
+        collapsedWidth={60}
+        onBreakpoint={(broken) => setCollapsed(broken)}
         style={{
           background: 'linear-gradient(195deg, #1e293b 0%, #0f172a 100%)',
           overflow: 'auto',
@@ -96,11 +97,11 @@ export default function AppLayout({ children, isDark, onThemeChange }: AppLayout
           background: isDark ? 'rgba(15, 20, 35, 0.6)' : 'rgba(255, 255, 255, 0.6)',
           backdropFilter: 'saturate(180%) blur(16px)',
           WebkitBackdropFilter: 'saturate(180%) blur(16px)',
-          padding: '0 28px',
+          padding: '0 20px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: 72,
+          height: 48,
           borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)'}`,
           position: 'sticky',
           top: 0,
@@ -150,18 +151,18 @@ export default function AppLayout({ children, isDark, onThemeChange }: AppLayout
           </div>
         </Header>
         <Content style={{
-          margin: '24px 32px 24px 28px',
-          padding: 24,
+          margin: '12px 16px 12px 12px',
+          padding: 16,
           background: isDark ? 'rgba(15, 20, 35, 0.7)' : 'rgba(255, 255, 255, 0.75)',
           backdropFilter: 'saturate(180%) blur(20px)',
           WebkitBackdropFilter: 'saturate(180%) blur(20px)',
-          borderRadius: 20,
+          borderRadius: 16,
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.8)'}`,
           boxShadow: isDark
             ? '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03)'
             : '0 8px 32px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)',
           overflow: 'auto',
-          minHeight: 'calc(100vh - 120px)',
+          height: 'calc(100vh - 72px)',
         }}>
           {children}
         </Content>

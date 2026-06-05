@@ -1,0 +1,8 @@
+---
+- name: 配置 Nginx 反向代理
+  hosts: web
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present

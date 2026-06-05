@@ -65,6 +65,18 @@ body {
   padding: 8px 16px !important;
 }
 
+/* 文本工具 Tabs 高度修复 (Monaco DiffEditor 需要明确高度) */
+.text-tools-tabs .ant-tabs-content-holder {
+  display: flex;
+  flex-direction: column;
+}
+.text-tools-tabs .ant-tabs-content {
+  flex: 1;
+}
+.text-tools-tabs .ant-tabs-tabpane-active {
+  height: 100%;
+}
+
 /* Button 微调 */
 .ant-btn-primary {
   box-shadow: 0 2px 8px rgba(64, 150, 255, 0.3);

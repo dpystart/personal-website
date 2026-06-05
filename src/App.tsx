@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import AppLayout from './components/Layout'
-import TextDiff from './pages/TextDiff'
 import OCR from './pages/OCR'
 import TextTools from './pages/TextTools'
 import Crontab from './pages/Crontab'
@@ -47,8 +46,8 @@ function App() {
     >
       <AppLayout isDark={isDark} onThemeChange={setIsDark}>
         <Routes>
-          <Route path="/" element={<Navigate to="/text-diff" replace />} />
-          <Route path="/text-diff" element={<TextDiff />} />
+          <Route path="/" element={<Navigate to="/text-tools" replace />} />
+          <Route path="/text-diff" element={<Navigate to="/text-tools" replace />} />
           <Route path="/ocr" element={<OCR />} />
           <Route path="/text-tools" element={<TextTools />} />
           <Route path="/crontab" element={<Crontab />} />

@@ -1,9 +1,7 @@
 import { useState, useRef } from 'react'
-import { Typography, Space, Button, Upload, message, Segmented, Select, theme } from 'antd'
+import { Space, Button, Upload, Segmented, Select, theme } from 'antd'
 import { SwapOutlined, UploadOutlined, ClearOutlined, BgColorsOutlined } from '@ant-design/icons'
 import { DiffEditor, type Monaco } from '@monaco-editor/react'
-
-const { Title, Text } = Typography
 
 const editorThemes = [
   {
@@ -119,13 +117,13 @@ function defineAllThemes(monaco: Monaco) {
   }
 }
 
-export default function TextDiff() {
+export default function TextDiffTab() {
   const { token } = theme.useToken()
   const isDark = token.colorBgContainer !== '#ffffff'
   const [original, setOriginal] = useState('')
   const [modified, setModified] = useState('')
   const [renderSideBySide, setRenderSideBySide] = useState(true)
-  const [editorTheme, setEditorTheme] = useState('soft-light')
+  const [editorTheme, setEditorTheme] = useState('ocean-breeze')
   const themesDefined = useRef(false)
 
   const handleFileUpload = (file: File, side: 'left' | 'right') => {
@@ -154,13 +152,12 @@ export default function TextDiff() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <Title level={4} style={{ margin: 0 }}>文本差异对比</Title>
-        <Space wrap>
+      <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 8 }}>
+        <Space wrap size="small">
           <Select
             value={editorTheme}
             onChange={setEditorTheme}
-            style={{ width: 130 }}
+            style={{ width: 110 }}
             size="small"
             suffixIcon={<BgColorsOutlined />}
             options={[
@@ -169,6 +166,7 @@ export default function TextDiff() {
             ]}
           />
           <Segmented
+            size="small"
             options={[
               { label: '并排', value: 'side' },
               { label: '内联', value: 'inline' },
@@ -177,16 +175,15 @@ export default function TextDiff() {
             onChange={(v) => setRenderSideBySide(v === 'side')}
           />
           <Upload beforeUpload={(f) => handleFileUpload(f, 'left')} showUploadList={false} accept=".txt,.json,.xml,.yaml,.yml,.md,.js,.ts,.py,.sh,.sql,.css,.html">
-            <Button icon={<UploadOutlined />}>原始文件</Button>
+            <Button size="small" icon={<UploadOutlined />}>原始文件</Button>
           </Upload>
           <Upload beforeUpload={(f) => handleFileUpload(f, 'right')} showUploadList={false} accept=".txt,.json,.xml,.yaml,.yml,.md,.js,.ts,.py,.sh,.sql,.css,.html">
-            <Button icon={<UploadOutlined />}>修改文件</Button>
+            <Button size="small" icon={<UploadOutlined />}>修改文件</Button>
           </Upload>
-          <Button icon={<SwapOutlined />} onClick={handleSwap}>交换</Button>
-          <Button icon={<ClearOutlined />} onClick={handleClear}>清空</Button>
+          <Button size="small" icon={<SwapOutlined />} onClick={handleSwap}>交换</Button>
+          <Button size="small" icon={<ClearOutlined />} onClick={handleClear}>清空</Button>
         </Space>
       </div>
-
       <div style={{ flex: 1, minHeight: 0, border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`, borderRadius: 12, overflow: 'hidden' }}>
         <DiffEditor
           original={original}
@@ -222,14 +219,6 @@ export default function TextDiff() {
           }}
         />
       </div>
-
-      {(original || modified) && (
-        <div style={{ marginTop: 12 }}>
-          <Text type="secondary">
-            提示：可直接在编辑器中修改文本内容，差异会实时更新高亮显示
-          </Text>
-        </div>
-      )}
     </div>
   )
 }
