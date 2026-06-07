@@ -1,7 +1,15 @@
 import { useState, useRef } from 'react'
 import { Space, Button, Upload, Segmented, Select, theme } from 'antd'
 import { SwapOutlined, UploadOutlined, ClearOutlined, BgColorsOutlined } from '@ant-design/icons'
-import { DiffEditor, type Monaco } from '@monaco-editor/react'
+import { DiffEditor, loader, type Monaco } from '@monaco-editor/react'
+
+let monacoConfigured = false
+if (!monacoConfigured) {
+  monacoConfigured = true
+  import('monaco-editor').then((monaco) => {
+    loader.config({ monaco })
+  })
+}
 
 const editorThemes = [
   {

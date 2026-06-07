@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { ConfigProvider, theme } from 'antd'
+import { ConfigProvider, theme, Spin } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import AppLayout from './components/Layout'
-import OCR from './pages/OCR'
-import TextTools from './pages/TextTools'
-import Crontab from './pages/Crontab'
-import Scripts from './pages/Scripts'
+
+const OCR = lazy(() => import('./pages/OCR'))
+const TextTools = lazy(() => import('./pages/TextTools'))
+const Crontab = lazy(() => import('./pages/Crontab'))
+const Scripts = lazy(() => import('./pages/Scripts'))
 
 function App() {
   const [isDark, setIsDark] = useState(false)
@@ -45,14 +46,16 @@ function App() {
       }}
     >
       <AppLayout isDark={isDark} onThemeChange={setIsDark}>
-        <Routes>
-          <Route path="/" element={<Navigate to="/text-tools" replace />} />
-          <Route path="/text-diff" element={<Navigate to="/text-tools" replace />} />
-          <Route path="/ocr" element={<OCR />} />
-          <Route path="/text-tools" element={<TextTools />} />
-          <Route path="/crontab" element={<Crontab />} />
-          <Route path="/scripts" element={<Scripts />} />
-        </Routes>
+        <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}><Spin size="large" /></div>}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/text-tools" replace />} />
+            <Route path="/text-diff" element={<Navigate to="/text-tools" replace />} />
+            <Route path="/ocr" element={<OCR />} />
+            <Route path="/text-tools" element={<TextTools />} />
+            <Route path="/crontab" element={<Crontab />} />
+            <Route path="/scripts" element={<Scripts />} />
+          </Routes>
+        </Suspense>
       </AppLayout>
     </ConfigProvider>
   )
