@@ -4,7 +4,6 @@ import { Layout, Menu, Switch, theme } from 'antd'
 import {
   FileImageOutlined,
   ToolOutlined,
-  ClockCircleOutlined,
   CodeOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -23,7 +22,6 @@ interface AppLayoutProps {
 const menuItems = [
   { key: '/text-tools', icon: <ToolOutlined />, label: '文本工具' },
   { key: '/ocr', icon: <FileImageOutlined />, label: '图片转文字' },
-  { key: '/crontab', icon: <ClockCircleOutlined />, label: 'Crontab' },
   { key: '/scripts', icon: <CodeOutlined />, label: '脚本管理' },
 ]
 

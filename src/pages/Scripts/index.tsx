@@ -475,6 +475,7 @@ export default function Scripts() {
         onCancel={() => setViewModalOpen(false)}
         footer={<Button onClick={() => setViewModalOpen(false)}>关闭</Button>}
         width={1100}
+        centered
         styles={{ body: { padding: '16px 0', maxHeight: '75vh', overflow: 'auto' } }}
       >
         {fileLoading ? (

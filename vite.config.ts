@@ -22,7 +22,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/ocr': {
-        target: 'http://42.193.136.198:1224',
+        target: 'http://localhost:1224',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/ocr/, ''),
       },

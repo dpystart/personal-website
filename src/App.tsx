@@ -6,7 +6,6 @@ import AppLayout from './components/Layout'
 
 const OCR = lazy(() => import('./pages/OCR'))
 const TextTools = lazy(() => import('./pages/TextTools'))
-const Crontab = lazy(() => import('./pages/Crontab'))
 const Scripts = lazy(() => import('./pages/Scripts'))
 
 function App() {
@@ -52,7 +51,7 @@ function App() {
             <Route path="/text-diff" element={<Navigate to="/text-tools" replace />} />
             <Route path="/ocr" element={<OCR />} />
             <Route path="/text-tools" element={<TextTools />} />
-            <Route path="/crontab" element={<Crontab />} />
+            <Route path="/crontab" element={<Navigate to="/text-tools" replace />} />
             <Route path="/scripts" element={<Scripts />} />
           </Routes>
         </Suspense>
