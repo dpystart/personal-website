@@ -1,10 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Typography, Button, Input, Space, message, Spin, Card } from 'antd'
+import { Button, Input, Space, message, Spin, Card, Typography, Upload } from 'antd'
 import { CopyOutlined, ClearOutlined, SettingOutlined, DeleteOutlined, UploadOutlined } from '@ant-design/icons'
-import { Upload } from 'antd'
 import { copyToClipboard } from '../../utils/clipboard'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 const { TextArea } = Input
 
 const DEFAULT_OCR_URL = '/ocr/api/ocr'
@@ -51,37 +50,28 @@ function parseBlocks(blocks: OCRBlock[]): { text: string; table: string[][] | nu
     height: Math.abs(b.box[3][1] - b.box[0][1]),
   }))
 
-  // 按 top 排序
   items.sort((a, b) => a.top - b.top)
 
-  // 1. 检测分割线：找相邻块之间的大间距（Y方向的gap）
-  //    分割线会在相邻文本块之间产生比普通行间距更大的空白
   const yGaps: { afterIndex: number; gap: number }[] = []
   for (let i = 0; i < items.length - 1; i++) {
     const gap = items[i + 1].top - items[i].bottom
     yGaps.push({ afterIndex: i, gap })
   }
 
-  // 计算所有间距，区分"行内间距"和"行间分割线间距"
   const allGaps = yGaps.map(g => g.gap).filter(g => g > 0).sort((a, b) => a - b)
 
-  // 用大津法(Otsu)思路：找到最佳阈值分割"小间距"和"大间距"
   let splitThreshold = 0
   if (allGaps.length >= 2) {
     const avgGap = allGaps.reduce((s, g) => s + g, 0) / allGaps.length
-    // 分割线间距一般是正常行间距的 2-3 倍以上
-    // 取中位数的 2 倍作为阈值
     const median = allGaps[Math.floor(allGaps.length / 2)]
     splitThreshold = Math.max(median * 2, avgGap * 1.5)
   }
 
-  // 2. 按分割线把文本块分组为"单元格行"
   const cellRows: typeof items[] = []
   let currentGroup: typeof items = []
 
   for (let i = 0; i < items.length; i++) {
     currentGroup.push(items[i])
-    // 检查这个块之后是否有分割线
     const gapInfo = yGaps.find(g => g.afterIndex === i)
     if (gapInfo && gapInfo.gap > splitThreshold && splitThreshold > 0) {
       cellRows.push(currentGroup)
@@ -90,15 +80,12 @@ function parseBlocks(blocks: OCRBlock[]): { text: string; table: string[][] | nu
   }
   if (currentGroup.length > 0) cellRows.push(currentGroup)
 
-  // 3. 检测列：分析所有块的 X 坐标聚类
   const columns = detectColumns(items)
 
   if (columns.length >= 2) {
-    // 表格模式：每个 cellRow 是一整行，内部按列分配，同一列的文本拼接
     const tableData: string[][] = []
     for (const cellRow of cellRows) {
       const rowData: string[] = new Array(columns.length).fill('')
-      // 按 top 排序保证拼接顺序正确
       cellRow.sort((a, b) => a.top - b.top || a.left - b.left)
       for (const item of cellRow) {
         const colIdx = findColumn(item.centerX, columns)
@@ -115,7 +102,6 @@ function parseBlocks(blocks: OCRBlock[]): { text: string; table: string[][] | nu
     return { text, table: tableData }
   }
 
-  // 非表格模式：每个 cellRow 的文本直接拼接为一行
   const text = cellRows.map(group => {
     group.sort((a, b) => a.top - b.top || a.left - b.left)
     return group.map(i => i.text).join('')
@@ -126,15 +112,12 @@ function parseBlocks(blocks: OCRBlock[]): { text: string; table: string[][] | nu
 function detectColumns(items: { left: number; right: number; centerX: number }[]): { center: number; left: number; right: number }[] {
   if (items.length === 0) return []
 
-  // 收集所有块的 left 坐标，聚类出列
   const lefts = items.map(i => i.left).sort((a, b) => a - b)
 
-  // 找 left 坐标的聚类中心
   const clusters: number[][] = []
   let cluster: number[] = [lefts[0]]
 
   for (let i = 1; i < lefts.length; i++) {
-    // 如果与上一个 left 差距小，归入同一簇
     if (lefts[i] - lefts[i - 1] < 30) {
       cluster.push(lefts[i])
     } else {
@@ -144,12 +127,10 @@ function detectColumns(items: { left: number; right: number; centerX: number }[]
   }
   clusters.push(cluster)
 
-  // 过滤掉太小的簇（噪声），只保留出现次数 >= 总块数 10% 的
   const minCount = Math.max(2, items.length * 0.1)
   const validClusters = clusters.filter(c => c.length >= minCount)
 
   if (validClusters.length < 2) {
-    // 尝试更大间距分割
     const bigClusters: number[][] = []
     let bc: number[] = [lefts[0]]
     for (let i = 1; i < lefts.length; i++) {
@@ -190,7 +171,7 @@ function findColumn(centerX: number, columns: { center: number; left: number; ri
   return bestIdx
 }
 
-export default function OCR() {
+export default function OcrTool() {
   const [results, setResults] = useState<OCRResult[]>([])
   const [ocrUrl, setOcrUrl] = useState(DEFAULT_OCR_URL)
   const [showSettings, setShowSettings] = useState(false)
@@ -272,11 +253,8 @@ export default function OCR() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <Title level={4} style={{ margin: 0 }}>图片转文字 (OCR)</Title>
-          <Text type="secondary" style={{ fontSize: 13 }}>Ctrl+V 粘贴截图或上传图片识别</Text>
-        </div>
+      <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Text type="secondary" style={{ fontSize: 13 }}>Ctrl+V 粘贴截图或上传图片识别</Text>
         <Space>
           <Upload
             multiple
@@ -297,7 +275,7 @@ export default function OCR() {
       </div>
 
       {showSettings && (
-        <Card size="small" style={{ marginBottom: 16 }}>
+        <Card size="small" style={{ marginBottom: 12 }}>
           <Space>
             <Text>OCR 服务地址：</Text>
             <Input value={ocrUrl} onChange={(e) => setOcrUrl(e.target.value)} style={{ width: 320 }} />
@@ -328,7 +306,6 @@ export default function OCR() {
               overflow: 'hidden',
               background: 'rgba(0,0,0,0.01)',
             }}>
-              {/* 上方：图片 */}
               <div style={{
                 padding: 12,
                 background: 'rgba(0,0,0,0.02)',
@@ -343,7 +320,6 @@ export default function OCR() {
                 </div>
               </div>
 
-              {/* 下方：识别结果 */}
               <div style={{ padding: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                   <Space size={8}>

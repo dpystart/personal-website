@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocr
+  namespace: personal-website
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ocr
+  template:
+    metadata:
+      labels:
+        app: ocr
+    spec:
+      containers:
+        - name: ocr
+          image: registry.cn-hangzhou.aliyuncs.com/dpy-k8s/umi-ocr-paddle:v1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 1224
+          env:
+            - name: HEADLESS
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ocr
+  namespace: personal-website
+spec:
+  selector:
+    app: ocr
+  ports:
+    - port: 1224
+      targetPort: 1224

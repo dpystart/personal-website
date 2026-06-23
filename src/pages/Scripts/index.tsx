@@ -4,7 +4,7 @@ import { copyToClipboard } from '../../utils/clipboard'
 import {
   PlusOutlined, SearchOutlined, DeleteOutlined,
   CopyOutlined, ReloadOutlined, CodeOutlined,
-  FolderOutlined, FolderAddOutlined,
+  FolderOutlined, FolderAddOutlined, EditOutlined,
 } from '@ant-design/icons'
 import Editor from '@monaco-editor/react'
 
@@ -95,6 +95,12 @@ export default function Scripts() {
   const [fileContent, setFileContent] = useState('')
   const [fileDescription, setFileDescription] = useState('')
   const [fileLoading, setFileLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [renameModalOpen, setRenameModalOpen] = useState(false)
+  const [renameTarget, setRenameTarget] = useState<{ category: string; key: string; name: string } | null>(null)
+  const [renameName, setRenameName] = useState('')
 
   // 新建文件
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -434,6 +440,15 @@ export default function Scripts() {
                       <Button size="small" type="text" icon={<CopyOutlined />} onClick={() => copyCode(category, node.key)} />
                     </Tooltip>
                   )}
+                  {node.isLeaf && (
+                    <Tooltip title="重命名">
+                      <Button size="small" type="text" icon={<EditOutlined />} onClick={() => {
+                        setRenameTarget({ category, key: node.key, name: node.title })
+                        setRenameName(node.title)
+                        setRenameModalOpen(true)
+                      }} />
+                    </Tooltip>
+                  )}
                   <Popconfirm
                     title={node.isLeaf ? '确定删除该文件？' : '确定删除该目录及其所有内容？'}
                     onConfirm={() => deleteItem(category, node.key)}
@@ -472,8 +487,40 @@ export default function Scripts() {
           </div>
         }
         open={viewModalOpen}
-        onCancel={() => setViewModalOpen(false)}
-        footer={<Button onClick={() => setViewModalOpen(false)}>关闭</Button>}
+        onCancel={() => { setViewModalOpen(false); setIsEditing(false) }}
+        footer={
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Space>
+              <Button icon={<CopyOutlined />} onClick={() => { copyToClipboard(isEditing ? editContent : fileContent); message.success('已复制代码') }}>复制代码</Button>
+            </Space>
+            <Space>
+              {isEditing ? (
+                <>
+                  <Button onClick={() => { setIsEditing(false); setEditContent('') }}>取消编辑</Button>
+                  <Button type="primary" loading={saving} onClick={async () => {
+                    if (!viewingFile) return
+                    setSaving(true)
+                    try {
+                      await fetch(`${API_BASE}/${viewingFile.category}/${viewingFile.path}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: editContent }),
+                      })
+                      setFileContent(editContent)
+                      setIsEditing(false)
+                      message.success('保存成功')
+                      fetchScripts()
+                    } catch { message.error('保存失败') }
+                    finally { setSaving(false) }
+                  }}>保存</Button>
+                </>
+              ) : (
+                <Button onClick={() => { setEditContent(fileContent); setIsEditing(true) }}>编辑</Button>
+              )}
+              <Button onClick={() => { setViewModalOpen(false); setIsEditing(false) }}>关闭</Button>
+            </Space>
+          </div>
+        }
         width={1100}
         centered
         styles={{ body: { padding: '16px 0', maxHeight: '75vh', overflow: 'auto' } }}
@@ -501,10 +548,11 @@ export default function Scripts() {
               <Editor
                 height={780}
                 language={viewingFile ? getLanguage(viewingFile.name) : 'shell'}
-                value={fileContent}
+                value={isEditing ? editContent : fileContent}
+                onChange={(v) => { if (isEditing) setEditContent(v || '') }}
                 theme={editorTheme}
                 options={{
-                  readOnly: true,
+                  readOnly: !isEditing,
                   minimap: { enabled: false },
                   fontSize: 14,
                   scrollBeyondLastLine: false,
@@ -584,6 +632,59 @@ export default function Scripts() {
             placeholder={currentPath.length > 0 ? `目录名（当前目录：${currentPath.join('/')}）` : '目录名，如 deploy'}
             style={{ flex: 1 }}
           />
+        </div>
+      </Modal>
+
+      {/* 重命名弹窗 */}
+      <Modal
+        title={null}
+        open={renameModalOpen}
+        onCancel={() => setRenameModalOpen(false)}
+        footer={null}
+        width={400}
+        centered
+        styles={{ body: { padding: '24px' } }}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Text strong style={{ fontSize: 15 }}>重命名文件</Text>
+        </div>
+        <Input
+          value={renameName}
+          onChange={(e) => setRenameName(e.target.value)}
+          onPressEnter={() => {
+            if (!renameTarget || !renameName || renameName === renameTarget.name) return
+            const parts = renameTarget.key.split('/')
+            parts[parts.length - 1] = renameName
+            const newPath = parts.join('/')
+            fetch(`${API_BASE}/${renameTarget.category}/rename`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ oldPath: renameTarget.key, newPath }),
+            }).then(res => {
+              if (res.ok) { message.success('重命名成功'); fetchScripts(); setRenameModalOpen(false) }
+              else { message.error('重命名失败') }
+            }).catch(() => message.error('重命名失败'))
+          }}
+          placeholder="输入新文件名"
+          autoFocus
+          style={{ marginBottom: 16 }}
+        />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <Button size="small" onClick={() => setRenameModalOpen(false)}>取消</Button>
+          <Button size="small" type="primary" onClick={() => {
+            if (!renameTarget || !renameName || renameName === renameTarget.name) return
+            const parts = renameTarget.key.split('/')
+            parts[parts.length - 1] = renameName
+            const newPath = parts.join('/')
+            fetch(`${API_BASE}/${renameTarget.category}/rename`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ oldPath: renameTarget.key, newPath }),
+            }).then(res => {
+              if (res.ok) { message.success('重命名成功'); fetchScripts(); setRenameModalOpen(false) }
+              else { message.error('重命名失败') }
+            }).catch(() => message.error('重命名失败'))
+          }}>确定</Button>
         </div>
       </Modal>
     </div>

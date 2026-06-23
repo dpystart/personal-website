@@ -4,8 +4,9 @@ import { ConfigProvider, theme, Spin } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import AppLayout from './components/Layout'
 
-const OCR = lazy(() => import('./pages/OCR'))
 const TextTools = lazy(() => import('./pages/TextTools'))
+const Tasks = lazy(() => import('./pages/Tasks'))
+const Commands = lazy(() => import('./pages/Commands'))
 const Scripts = lazy(() => import('./pages/Scripts'))
 
 function App() {
@@ -49,9 +50,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/text-tools" replace />} />
             <Route path="/text-diff" element={<Navigate to="/text-tools" replace />} />
-            <Route path="/ocr" element={<OCR />} />
+            <Route path="/ocr" element={<Navigate to="/text-tools" replace />} />
             <Route path="/text-tools" element={<TextTools />} />
             <Route path="/crontab" element={<Navigate to="/text-tools" replace />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/commands" element={<Commands />} />
             <Route path="/scripts" element={<Scripts />} />
           </Routes>
         </Suspense>

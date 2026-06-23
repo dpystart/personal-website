@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Typography, Tabs, Spin } from 'antd'
 import PrometheusLabelTool from './PrometheusLabelTool'
+import OcrTool from './OcrTool'
 import BatchString from './BatchString'
 import CrontabTool from './CrontabTool'
 import Base64Tool from './Base64Tool'
@@ -27,6 +28,7 @@ export default function TextTools() {
         items={[
           { key: 'diff', label: '文本对比', children: <LazyDiff /> },
           { key: 'prom-label', label: '标签格式化', children: <PrometheusLabelTool /> },
+          { key: 'ocr', label: '图片转文字', children: <OcrTool /> },
           { key: 'batch', label: '批量处理', children: <BatchString /> },
           { key: 'crontab', label: 'Crontab', children: <CrontabTool /> },
           { key: 'base64', label: 'Base64', children: <Base64Tool /> },

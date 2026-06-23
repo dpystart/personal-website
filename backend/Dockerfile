@@ -1,13 +1,18 @@
 FROM golang:1.22-alpine AS builder
 
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 WORKDIR /app
 COPY go.mod ./
 COPY main.go ./
+
+ENV GOPROXY=https://goproxy.cn,direct
 RUN go build -o server .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk --no-cache add ca-certificates tzdata
 ENV TZ=Asia/Shanghai
 
 WORKDIR /app

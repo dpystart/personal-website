@@ -2,8 +2,9 @@ import { useState, type ReactNode } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Switch, theme } from 'antd'
 import {
-  FileImageOutlined,
   ToolOutlined,
+  CheckSquareOutlined,
+  ThunderboltOutlined,
   CodeOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -21,7 +22,8 @@ interface AppLayoutProps {
 
 const menuItems = [
   { key: '/text-tools', icon: <ToolOutlined />, label: '文本工具' },
-  { key: '/ocr', icon: <FileImageOutlined />, label: '图片转文字' },
+  { key: '/tasks', icon: <CheckSquareOutlined />, label: '任务管理' },
+  { key: '/commands', icon: <ThunderboltOutlined />, label: '命令速查' },
   { key: '/scripts', icon: <CodeOutlined />, label: '脚本管理' },
 ]
 

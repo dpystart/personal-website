@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>任务管理模块 - 效果预览</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1f2937; }
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+.sidebar { width: 220px; background: linear-gradient(195deg, #1e293b 0%, #0f172a 100%); color: #fff; display: flex; flex-direction: column; padding: 20px 0; position: sticky; top: 0; }
+.sidebar-logo { padding: 0 24px; margin-bottom: 32px; font-size: 20px; font-weight: 800; background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sidebar-menu { list-style: none; padding: 0 12px; }
+.sidebar-menu li { padding: 12px 16px; border-radius: 10px; margin-bottom: 4px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.7); display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+.sidebar-menu li:hover { background: rgba(255,255,255,0.06); }
+.sidebar-menu li.active { background: rgba(96, 165, 250, 0.15); color: #60a5fa; font-weight: 500; }
+.sidebar-menu li .icon { width: 18px; height: 18px; opacity: 0.8; }
+
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.header { height: 56px; background: rgba(255,255,255,0.8); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.04); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+.content { flex: 1; overflow: auto; padding: 20px 24px; }
+
+/* Tabs */
+.view-tabs { display: flex; gap: 4px; background: #f1f5f9; border-radius: 8px; padding: 4px; }
+.view-tab { padding: 6px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; color: #64748b; transition: all 0.2s; border: none; background: none; }
+.view-tab.active { background: #fff; color: #1e40af; font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* Page selector */
+.page-tabs { display: flex; border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; }
+.page-tab { padding: 12px 20px; font-size: 14px; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.page-tab.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 500; }
+
+/* Stats Cards */
+.stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.stat-card .label { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #1e293b; }
+.stat-card .trend { font-size: 12px; color: #10b981; margin-top: 4px; }
+.stat-card .trend.down { color: #ef4444; }
+
+/* Kanban */
+.kanban { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 20px; min-height: 500px; }
+.kanban-col { min-width: 300px; width: 300px; background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; }
+.kanban-col-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.kanban-col-title { font-size: 14px; font-weight: 600; color: #374151; }
+.kanban-col-count { background: #e2e8f0; color: #64748b; font-size: 12px; padding: 2px 8px; border-radius: 10px; }
+.kanban-card { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 10px; border: 1px solid #e5e7eb; cursor: grab; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+.kanban-card .card-title { font-size: 14px; font-weight: 500; margin-bottom: 8px; color: #1f2937; }
+.kanban-card .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card-tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
+.tag-blue { background: #dbeafe; color: #1d4ed8; }
+.tag-green { background: #dcfce7; color: #166534; }
+.tag-orange { background: #fed7aa; color: #c2410c; }
+.tag-purple { background: #ede9fe; color: #6d28d9; }
+.tag-red { background: #fee2e2; color: #dc2626; }
+.card-priority { font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.p0 { background: #fee2e2; color: #dc2626; }
+.p1 { background: #fed7aa; color: #c2410c; }
+.p2 { background: #fef3c7; color: #b45309; }
+.p3 { background: #e0e7ff; color: #4338ca; }
+.card-due { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 3px; }
+.card-due.overdue { color: #dc2626; }
+.card-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; margin-left: auto; }
+.card-progress { margin-top: 10px; }
+.progress-bar { height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #3b82f6, #6366f1); }
+.progress-text { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+/* Calendar View */
+.calendar-view { background: #fff; border-radius: 16px; padding: 28px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.calendar-title { font-size: 20px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+.calendar-nav { display: flex; gap: 6px; align-items: center; }
+.calendar-nav button { padding: 8px 14px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: #475569; transition: all 0.2s; }
+.calendar-nav button:hover { background: #f8fafc; border-color: #cbd5e1; }
+.calendar-nav .today-btn { background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 500; }
+.calendar-nav .today-btn:hover { background: #1d4ed8; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-radius: 12px; overflow: hidden; border: 1px solid #e5e7eb; }
+.calendar-day-header { background: #f8fafc; padding: 14px 8px; text-align: center; font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; }
+.calendar-day-header:not(:last-child) { border-right: 1px solid #f1f5f9; }
+.calendar-day { background: #fff; min-height: 120px; padding: 10px; border-right: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; position: relative; }
+.calendar-day:nth-child(7n) { border-right: none; }
+.calendar-day:hover { background: #fafbfd; }
+.calendar-day.today { background: linear-gradient(135deg, #eff6ff 0%, #f0f7ff 100%); }
+.calendar-day.today::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #6366f1); border-radius: 0 0 2px 2px; }
+.calendar-day .day-num { font-size: 13px; color: #94a3b8; margin-bottom: 8px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.calendar-day.today .day-num { background: #2563eb; color: #fff; font-weight: 700; }
+.calendar-day.weekend .day-num { color: #cbd5e1; }
+.calendar-day .day-task { font-size: 11px; padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; font-weight: 500; transition: transform 0.15s, box-shadow 0.15s; border-left: 3px solid transparent; }
+.calendar-day .day-task:hover { transform: translateX(2px); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.day-task.blue { background: #eff6ff; color: #1d4ed8; border-left-color: #3b82f6; }
+.day-task.green { background: #f0fdf4; color: #166534; border-left-color: #22c55e; }
+.day-task.orange { background: #fff7ed; color: #c2410c; border-left-color: #f97316; }
+.day-task.purple { background: #faf5ff; color: #7c3aed; border-left-color: #8b5cf6; }
+.day-task.red { background: #fef2f2; color: #dc2626; border-left-color: #ef4444; }
+.calendar-day .more-tasks { font-size: 11px; color: #64748b; padding: 2px 6px; cursor: pointer; text-align: center; border-radius: 4px; }
+.calendar-day .more-tasks:hover { background: #f1f5f9; }
+
+/* Weekly Report */
+.report-container { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.report-panel { background: #fff; border-radius: 12px; padding: 24px; border: 1px solid rgba(0,0,0,0.04); }
+.report-panel h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.report-options { display: flex; flex-direction: column; gap: 12px; }
+.report-option { display: flex; align-items: center; justify-content: space-between; }
+.report-option label { font-size: 14px; color: #374151; }
+.report-select { padding: 6px 12px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 13px; }
+.report-btn { padding: 10px 24px; background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 16px; }
+.report-preview { font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.8; color: #374151; white-space: pre-wrap; max-height: 400px; overflow-y: auto; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
+.report-actions { display: flex; gap: 8px; margin-top: 12px; }
+.report-actions button { padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; border: 1px solid #e2e8f0; background: #fff; }
+.report-actions button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+
+/* Today Focus */
+.today-section { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.04); }
+.today-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.today-title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.today-date { font-size: 13px; color: #64748b; }
+.today-tasks { display: flex; gap: 12px; flex-wrap: wrap; }
+.today-task { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 13px; }
+.today-task .checkbox { width: 18px; height: 18px; border: 2px solid #cbd5e1; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.today-task .checkbox.checked { background: #10b981; border-color: #10b981; color: #fff; font-size: 11px; }
+.today-task.done { text-decoration: line-through; color: #94a3b8; }
+
+/* Dashboard charts placeholder */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 20px; }
+.chart-card { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); }
+.chart-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 16px; color: #374151; }
+.chart-placeholder { height: 200px; background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%); border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-around; padding: 20px; }
+.chart-bar { width: 32px; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #3b82f6, #6366f1); position: relative; }
+.chart-bar::after { content: attr(data-label); position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #64748b; }
+.pie-placeholder { height: 200px; display: flex; align-items: center; justify-content: center; }
+.pie-circle { width: 160px; height: 160px; border-radius: 50%; background: conic-gradient(#3b82f6 0% 35%, #10b981 35% 60%, #f59e0b 60% 80%, #e5e7eb 80% 100%); position: relative; }
+.pie-circle::after { content: ''; position: absolute; top: 30px; left: 30px; right: 30px; bottom: 30px; background: #fff; border-radius: 50%; }
+.pie-legend { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.pie-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #64748b; }
+.pie-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+/* Add task button */
+.add-btn { position: fixed; bottom: 32px; right: 32px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #6366f1); color: #fff; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4); display: flex; align-items: center; justify-content: center; transition: transform 0.2s; z-index: 100; }
+.add-btn:hover { transform: scale(1.1); }
+
+/* Hidden pages */
+.page { display: none; }
+.page.active { display: block; }
+
+/* Daily Log */
+.daily-log { background: #fff; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); margin-top: 20px; }
+.log-input-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.log-input { flex: 1; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; }
+.log-submit { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; }
+.log-list { display: flex; flex-direction: column; gap: 8px; }
+.log-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+.log-time { color: #64748b; white-space: nowrap; font-size: 12px; min-width: 46px; }
+.log-content { color: #374151; }
+.log-task-link { font-size: 11px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 3px; margin-left: 8px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">⚡ DevPilot</div>
+    <ul class="sidebar-menu">
+      <li onclick="switchMenu(this, 'text-tools')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        文本工具
+      </li>
+      <li class="active" onclick="switchMenu(this, 'tasks')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+        任务管理
+      </li>
+      <li onclick="switchMenu(this, 'scripts')">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        脚本管理
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main">
+    <div class="header">
+      <div class="page-tabs">
+        <div class="page-tab active" onclick="switchPage(this, 'board')">📋 任务看板</div>
+        <div class="page-tab" onclick="switchPage(this, 'dashboard')">📊 数据总览</div>
+        <div class="page-tab" onclick="switchPage(this, 'report')">📝 周报中心</div>
+      </div>
+      <div class="view-tabs" id="viewTabs">
+        <button class="view-tab active" onclick="switchView(this, 'kanban')">看板</button>
+        <button class="view-tab" onclick="switchView(this, 'calendar')">日历</button>
+        <button class="view-tab" onclick="switchView(this, 'list')">列表</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ===== 任务看板页 ===== -->
+      <div class="page active" id="page-board">
+        <!-- 今日聚焦 -->
+        <div class="today-section">
+          <div class="today-header">
+            <div class="today-title">🎯 今日聚焦</div>
+            <div class="today-date">2026年6月22日 周一</div>
+          </div>
+          <div class="today-tasks">
+            <div class="today-task done"><div class="checkbox checked">✓</div>【集群变更】生产集群 etcd 升级 3.5.9→3.5.12</div>
+            <div class="today-task done"><div class="checkbox checked">✓</div>【告警处理】node-exporter 内存告警误报排查</div>
+            <div class="today-task"><div class="checkbox"></div>【故障报修】A区存储节点磁盘故障更换跟进</div>
+            <div class="today-task"><div class="checkbox"></div>【主机交付】3台GPU主机初始化并交付业务方</div>
+          </div>
+        </div>
+
+        <!-- 看板视图 -->
+        <div id="view-kanban">
+          <div class="kanban">
+            <!-- 集群变更 -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="kanban-col-title">🔧 集群变更</span>
+                <span class="kanban-col-count">4</span>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">生产集群 K8S 版本升级 1.27→1.29</div>
+                <div class="card-meta">
+                  <span class="card-priority p0">P0</span>
+                  <span class="card-tag tag-blue">生产</span>
+                  <span class="card-due">📅 6/25</span>
+                </div>
+                <div class="card-progress">
+                  <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+                  <div class="progress-text">进度 40% · 已完成预发验证</div>
+                </div>
+              </div>
+              <div class="kanban-card" style="opacity:0.7">
+                <div class="card-title" style="text-decoration:line-through">etcd 版本升级 3.5.9→3.5.12</div>
+                <div class="card-meta">
+                  <span class="card-priority p1">P1</span>
+                  <span class="card-tag tag-blue">生产</span>
+                  <span class="card-due">✓ 6/22完成</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">测试集群扩容 worker 节点 x3</div>
+                <div class="card-meta">
+                  <span class="card-priority p2">P2</span>
+                  <span class="card-tag tag-green">测试</span>
+                  <span class="card-due">📅 6/24</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">CoreDNS 配置优化（解析超时问题）</div>
+                <div class="card-meta">
+                  <span class="card-priority p2">P2</span>
+                  <span class="card-tag tag-blue">生产</span>
+                  <span class="card-due">📅 6/26</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 故障报修 -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="kanban-col-title">🚨 故障报修</span>
+                <span class="kanban-col-count">3</span>
+              </div>
+              <div class="kanban-card" style="border-left: 3px solid #ef4444;">
+                <div class="card-title">A区存储节点 ceph-osd.15 磁盘故障</div>
+                <div class="card-meta">
+                  <span class="card-priority p0">P0</span>
+                  <span class="card-tag tag-red">紧急</span>
+                  <span class="card-due overdue">📅 逾期1天</span>
+                </div>
+                <div style="margin-top:8px;font-size:11px;color:#ef4444;background:#fef2f2;padding:4px 8px;border-radius:4px;">⚠️ 已提交更换工单，等待机房确认</div>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">B区网络交换机端口 flapping</div>
+                <div class="card-meta">
+                  <span class="card-priority p1">P1</span>
+                  <span class="card-tag tag-orange">网络</span>
+                  <span class="card-due">📅 今天</span>
+                </div>
+              </div>
+              <div class="kanban-card" style="opacity:0.7">
+                <div class="card-title" style="text-decoration:line-through">C区 GPU 服务器电源模块故障更换</div>
+                <div class="card-meta">
+                  <span class="card-tag tag-purple">硬件</span>
+                  <span class="card-due">✓ 6/20完成</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 告警处理 -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="kanban-col-title">🔔 告警处理</span>
+                <span class="kanban-col-count">4</span>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">prod-cluster CPU 使用率持续 >85%</div>
+                <div class="card-meta">
+                  <span class="card-priority p1">P1</span>
+                  <span class="card-tag tag-red">紧急</span>
+                  <span class="card-due">📅 今天</span>
+                </div>
+              </div>
+              <div class="kanban-card" style="opacity:0.7">
+                <div class="card-title" style="text-decoration:line-through">node-exporter 内存告警误报</div>
+                <div class="card-meta">
+                  <span class="card-tag tag-orange">误报</span>
+                  <span class="card-due">✓ 6/22完成</span>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">日志采集 Filebeat 堆积告警</div>
+                <div class="card-meta">
+                  <span class="card-priority p2">P2</span>
+                  <span class="card-tag tag-orange">日志</span>
+                  <span class="card-due">📅 6/23</span>
+                </div>
+              </div>
+              <div class="kanban-card" style="opacity:0.7">
+                <div class="card-title" style="text-decoration:line-through">磁盘空间告警 /data 分区 >90%</div>
+                <div class="card-meta">
+                  <span class="card-tag tag-green">已清理</span>
+                  <span class="card-due">✓ 6/19完成</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 主机交付 -->
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span class="kanban-col-title">🖥️ 主机交付</span>
+                <span class="kanban-col-count">3</span>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">3台 GPU 主机初始化交付（AI训练平台）</div>
+                <div class="card-meta">
+                  <span class="card-priority p1">P1</span>
+                  <span class="card-tag tag-purple">GPU</span>
+                  <span class="card-due">📅 6/23</span>
+                </div>
+                <div class="card-progress">
+                  <div class="progress-bar"><div class="progress-fill" style="width:70%"></div></div>
+                  <div class="progress-text">进度 70% · 系统装好，网络配置中</div>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="card-title">5台通用计算节点交付（大数据组）</div>
+                <div class="card-meta">
+                  <span class="card-priority p2">P2</span>
+                  <span class="card-tag tag-green">通用</span>
+                  <span class="card-due">📅 6/26</span>
+                </div>
+              </div>
+              <div class="kanban-card" style="opacity:0.7">
+                <div class="card-title" style="text-decoration:line-through">2台高内存主机交付（ES集群扩容）</div>
+                <div class="card-meta">
+                  <span class="card-tag tag-green">通用</span>
+                  <span class="card-due">✓ 6/18完成</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 日历视图 -->
+        <div id="view-calendar" style="display:none">
+          <div class="calendar-view">
+            <div class="calendar-header">
+              <div class="calendar-title">📅 2026年6月</div>
+              <div class="calendar-nav">
+                <button>‹ 上月</button>
+                <button class="today-btn">今天</button>
+                <button>下月 ›</button>
+              </div>
+            </div>
+            <div class="calendar-grid">
+              <div class="calendar-day-header">周一</div>
+              <div class="calendar-day-header">周二</div>
+              <div class="calendar-day-header">周三</div>
+              <div class="calendar-day-header">周四</div>
+              <div class="calendar-day-header">周五</div>
+              <div class="calendar-day-header">周六</div>
+              <div class="calendar-day-header">周日</div>
+
+              <!-- Week: 6/15 - 6/21 -->
+              <div class="calendar-day">
+                <div class="day-num">15</div>
+                <div class="day-task blue">K8S节点巡检</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">16</div>
+                <div class="day-task orange">磁盘空间告警处理</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">17</div>
+                <div class="day-task purple">2台高内存主机交付</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">18</div>
+                <div class="day-task purple">ES集群扩容验证</div>
+                <div class="day-task blue">Ingress规则变更</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">19</div>
+                <div class="day-task orange">磁盘告警/data清理</div>
+              </div>
+              <div class="calendar-day weekend">
+                <div class="day-num">20</div>
+                <div class="day-task red">GPU电源故障更换</div>
+              </div>
+              <div class="calendar-day weekend">
+                <div class="day-num">21</div>
+              </div>
+
+              <!-- Week: 6/22 - 6/28 (current) -->
+              <div class="calendar-day today">
+                <div class="day-num">22</div>
+                <div class="day-task blue">etcd升级3.5.12</div>
+                <div class="day-task orange">内存告警误报排查</div>
+                <div class="day-task red">A区磁盘故障跟进</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">23</div>
+                <div class="day-task purple">3台GPU主机交付</div>
+                <div class="day-task orange">Filebeat堆积处理</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">24</div>
+                <div class="day-task green">测试集群扩容x3</div>
+                <div class="day-task red">网络flapping修复</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">25</div>
+                <div class="day-task blue">K8S 1.29升级(生产)</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">26</div>
+                <div class="day-task purple">5台计算节点交付</div>
+                <div class="day-task blue">CoreDNS配置优化</div>
+              </div>
+              <div class="calendar-day weekend">
+                <div class="day-num">27</div>
+              </div>
+              <div class="calendar-day weekend">
+                <div class="day-num">28</div>
+              </div>
+
+              <!-- Week: 6/29 - 7/5 -->
+              <div class="calendar-day">
+                <div class="day-num">29</div>
+                <div class="day-task blue">集群网络策略梳理</div>
+              </div>
+              <div class="calendar-day">
+                <div class="day-num">30</div>
+                <div class="day-task orange">告警规则优化</div>
+                <div class="day-task purple">新批次主机上架</div>
+              </div>
+              <div class="calendar-day" style="opacity:0.5">
+                <div class="day-num">1</div>
+                <div class="day-task blue">Harbor镜像仓库迁移</div>
+              </div>
+              <div class="calendar-day" style="opacity:0.5">
+                <div class="day-num">2</div>
+              </div>
+              <div class="calendar-day" style="opacity:0.5">
+                <div class="day-num">3</div>
+              </div>
+              <div class="calendar-day weekend" style="opacity:0.5">
+                <div class="day-num">4</div>
+              </div>
+              <div class="calendar-day weekend" style="opacity:0.5">
+                <div class="day-num">5</div>
+              </div>
+            </div>
+
+            <!-- 日历底部图例 -->
+            <div style="display:flex;gap:16px;margin-top:16px;padding-top:12px;border-top:1px solid #f1f5f9">
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><span style="width:10px;height:10px;border-radius:3px;background:#3b82f6;display:inline-block"></span>集群变更</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><span style="width:10px;height:10px;border-radius:3px;background:#ef4444;display:inline-block"></span>故障报修</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><span style="width:10px;height:10px;border-radius:3px;background:#f97316;display:inline-block"></span>告警处理</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><span style="width:10px;height:10px;border-radius:3px;background:#8b5cf6;display:inline-block"></span>主机交付</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#64748b"><span style="width:10px;height:10px;border-radius:3px;background:#22c55e;display:inline-block"></span>扩容</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 列表视图 -->
+        <div id="view-list" style="display:none">
+          <div style="background:#fff;border-radius:12px;padding:20px;border:1px solid rgba(0,0,0,0.04)">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead>
+                <tr style="border-bottom:2px solid #e5e7eb;text-align:left">
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">任务</th>
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">分类</th>
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">状态</th>
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">优先级</th>
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">截止日期</th>
+                  <th style="padding:12px 8px;color:#64748b;font-weight:500">进度</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">A区存储节点 ceph-osd.15 磁盘故障</td><td><span class="card-tag tag-red">故障报修</span></td><td><span style="color:#ef4444">⊘ 阻塞</span></td><td><span class="card-priority p0">P0</span></td><td style="color:#ef4444">6/21 (逾期)</td><td>—</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">生产集群 K8S 版本升级 1.27→1.29</td><td><span class="card-tag tag-blue">集群变更</span></td><td><span style="color:#f59e0b">● 进行中</span></td><td><span class="card-priority p0">P0</span></td><td>6/25</td><td>40%</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">prod-cluster CPU 使用率 >85%</td><td><span class="card-tag tag-orange">告警处理</span></td><td><span style="color:#f59e0b">● 进行中</span></td><td><span class="card-priority p1">P1</span></td><td>6/22</td><td>—</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">3台GPU主机初始化交付</td><td><span class="card-tag tag-purple">主机交付</span></td><td><span style="color:#f59e0b">● 进行中</span></td><td><span class="card-priority p1">P1</span></td><td>6/23</td><td>70%</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">B区网络交换机端口 flapping</td><td><span class="card-tag tag-red">故障报修</span></td><td><span style="color:#64748b">○ 待办</span></td><td><span class="card-priority p1">P1</span></td><td>6/22</td><td>—</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500">测试集群扩容 worker 节点 x3</td><td><span class="card-tag tag-blue">集群变更</span></td><td><span style="color:#64748b">○ 待办</span></td><td><span class="card-priority p2">P2</span></td><td>6/24</td><td>—</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500;text-decoration:line-through;color:#94a3b8">etcd 升级 3.5.9→3.5.12</td><td><span class="card-tag tag-blue">集群变更</span></td><td><span style="color:#10b981">✓ 已完成</span></td><td><span class="card-priority p1">P1</span></td><td>6/22 ✓</td><td>100%</td></tr>
+                <tr style="border-bottom:1px solid #f1f5f9"><td style="padding:12px 8px;font-weight:500;text-decoration:line-through;color:#94a3b8">node-exporter 内存告警误报排查</td><td><span class="card-tag tag-orange">告警处理</span></td><td><span style="color:#10b981">✓ 已完成</span></td><td><span class="card-priority p2">P2</span></td><td>6/22 ✓</td><td>100%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 每日记录 -->
+        <div class="daily-log">
+          <h4 style="font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px">📝 今日工作记录 <span style="font-size:11px;color:#64748b;font-weight:400">快速记录，周报自动汇总</span></h4>
+          <div class="log-input-row">
+            <input class="log-input" placeholder="记录今天做了什么... 例如：完成etcd升级，处理了xx告警" />
+            <button class="log-submit">记录</button>
+          </div>
+          <div class="log-list">
+            <div class="log-item"><span class="log-time">16:10</span><span class="log-content">A区磁盘故障已提交更换工单，联系机房确认备件到货时间<span class="log-task-link">关联: A区磁盘故障</span></span></div>
+            <div class="log-item"><span class="log-time">14:30</span><span class="log-content">node-exporter 告警排查完毕，修改阈值避免误报，已更新告警规则<span class="log-task-link">关联: 告警误报</span></span></div>
+            <div class="log-item"><span class="log-time">11:20</span><span class="log-content">etcd 升级完成，3个master节点逐个滚动升级，集群状态正常<span class="log-task-link">关联: etcd升级</span></span></div>
+            <div class="log-item"><span class="log-time">09:45</span><span class="log-content">GPU主机系统安装完成(Ubuntu22.04+CUDA12.1)，开始配置网络和存储挂载<span class="log-task-link">关联: GPU交付</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 数据总览页 ===== -->
+      <div class="page" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="label">🔧 本周集群变更</div>
+            <div class="value">6</div>
+            <div class="trend">已完成3项，进行中3项</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">🚨 故障报修</div>
+            <div class="value" style="color:#ef4444">2</div>
+            <div class="trend down">1项逾期待处理</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">🔔 告警处理</div>
+            <div class="value">4</div>
+            <div class="trend">已处理2项，待处理2项</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">🖥️ 主机交付</div>
+            <div class="value">3</div>
+            <div class="trend">交付中2批，已完成1批</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h4>📈 近4周任务完成趋势</h4>
+            <div class="chart-placeholder">
+              <div class="chart-bar" style="height:50%" data-label="W22"></div>
+              <div class="chart-bar" style="height:70%" data-label="W23"></div>
+              <div class="chart-bar" style="height:55%" data-label="W24"></div>
+              <div class="chart-bar" style="height:90%" data-label="W25"></div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h4>🏷️ 任务分类占比</h4>
+            <div class="pie-placeholder">
+              <div class="pie-circle"></div>
+            </div>
+            <div class="pie-legend">
+              <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#3b82f6"></div>集群变更 35%</div>
+              <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#10b981"></div>主机交付 25%</div>
+              <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#f59e0b"></div>告警处理 25%</div>
+              <div class="pie-legend-item"><div class="pie-legend-dot" style="background:#e5e7eb"></div>故障报修 15%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 本周时间线 -->
+        <div class="chart-card" style="margin-top:16px">
+          <h4>📅 本周进度时间线</h4>
+          <div style="padding:16px 0">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:12px">
+              <span>周一 6/22</span><span>周二 6/23</span><span>周三 6/24</span><span>周四 6/25</span><span>周五 6/26</span>
+            </div>
+            <div style="position:relative">
+              <div style="height:1px;background:#e5e7eb;position:absolute;top:14px;left:0;right:0"></div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">K8S 1.29 升级(生产)</span><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:60%;background:linear-gradient(90deg,#3b82f6,#6366f1);border-radius:4px"></div></div></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">A区磁盘故障修复</span><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:25%;background:linear-gradient(90deg,#ef4444,#dc2626);border-radius:4px"></div></div></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">3台GPU主机交付</span><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:70%;background:linear-gradient(90deg,#8b5cf6,#7c3aed);border-radius:4px"></div></div></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">5台计算节点交付</span><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative"><div style="position:absolute;left:50%;top:0;bottom:0;width:30%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:4px"></div></div></div>
+                <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">告警规则优化</span><div style="flex:1;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:45%;background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:4px"></div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 周报中心页 ===== -->
+      <div class="page" id="page-report">
+        <div class="report-container">
+          <div class="report-panel">
+            <h3>⚙️ 生成配置</h3>
+            <div class="report-options">
+              <div class="report-option">
+                <label>报告类型</label>
+                <select class="report-select">
+                  <option>周报</option>
+                  <option>月报</option>
+                  <option>季报</option>
+                </select>
+              </div>
+              <div class="report-option">
+                <label>选择周次</label>
+                <select class="report-select">
+                  <option>第26周 (6/22 - 6/28)</option>
+                  <option>第25周 (6/15 - 6/21)</option>
+                  <option>第24周 (6/8 - 6/14)</option>
+                </select>
+              </div>
+              <div class="report-option">
+                <label>报告模板</label>
+                <select class="report-select">
+                  <option>标准周报模板</option>
+                  <option>简洁版</option>
+                  <option>详细版（含进展记录）</option>
+                </select>
+              </div>
+              <div class="report-option">
+                <label>包含内容</label>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 已完成任务</label>
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 进行中任务</label>
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 工作记录</label>
+                  <label style="font-size:12px;display:flex;align-items:center;gap:4px"><input type="checkbox" checked> 下周计划</label>
+                </div>
+              </div>
+            </div>
+            <button class="report-btn" onclick="document.getElementById('report-result').style.display='block'">📄 生成周报</button>
+
+            <!-- 历史周报 -->
+            <div style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px">
+              <h4 style="font-size:14px;font-weight:500;margin-bottom:12px;color:#64748b">📁 历史报告</h4>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:6px;font-size:13px;cursor:pointer">
+                  <span>第25周周报 (6/15-6/21)</span><span style="color:#64748b;font-size:11px">6/21生成</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:6px;font-size:13px;cursor:pointer">
+                  <span>第24周周报 (6/8-6/14)</span><span style="color:#64748b;font-size:11px">6/14生成</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-panel" id="report-result" style="display:block">
+            <h3>📋 周报预览</h3>
+            <div class="report-preview">## 本周工作总结（第26周 6/22-6/28）
+
+### 🔧 集群变更
+1. **etcd 版本升级 3.5.9→3.5.12** ✅ 已完成
+   - 3个master节点逐个滚动升级，业务无感知
+   - 升级后验证集群健康状态正常
+
+2. **生产集群 K8S 1.27→1.29 升级** 🔄 进行中(40%)
+   - 已完成预发环境验证，兼容性测试通过
+   - 计划6/25窗口期执行生产升级
+
+3. **测试集群扩容 worker 节点 x3** 待执行
+   - 配合大数据组业务量增长需求
+
+### 🚨 故障报修
+1. **A区存储节点 ceph-osd.15 磁盘故障** ⚠️ 处理中
+   - 已提交更换工单，等待机房确认备件
+   - 数据已自动rebalance，暂无数据风险
+
+2. **B区交换机端口 flapping** 待处理
+   - 已定位到光模块疑似故障，待更换验证
+
+### 🔔 告警处理
+1. **node-exporter 内存告警误报** ✅ 已解决
+   - 排查为采集间隔导致瞬时峰值，调整阈值
+2. **prod-cluster CPU >85%** 🔄 处理中
+   - 定位到某业务突发流量，协调业务方限流
+
+### 🖥️ 主机交付
+1. **3台GPU主机交付（AI训练平台）** 🔄 进行中(70%)
+   - 系统安装完成(Ubuntu22.04+CUDA12.1)
+   - 网络和存储配置中，预计明日交付
+2. **5台通用计算节点（大数据组）** 待开始
+
+### 📌 下周计划
+1. 完成生产K8S 1.29升级（周三窗口期）
+2. A区磁盘更换完成后验证ceph状态
+3. 5台计算节点完成初始化并交付
+4. CoreDNS 配置优化上线
+5. 告警规则周期性review和优化</div>
+            <div class="report-actions">
+              <button class="primary">📋 复制 Markdown</button>
+              <button>📄 复制富文本（飞书/钉钉）</button>
+              <button>💾 下载 .md</button>
+              <button>✏️ 编辑</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新建任务按钮 -->
+    <button class="add-btn" title="新建任务" onclick="openModal()">+</button>
+  </div>
+</div>
+
+<!-- 新建任务弹窗 -->
+<div id="task-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.4);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;width:520px;max-width:90vw;box-shadow:0 24px 48px rgba(0,0,0,0.15);overflow:hidden">
+    <!-- 弹窗头部 -->
+    <div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <h3 style="font-size:16px;font-weight:600;margin:0">➕ 新建任务</h3>
+      <button onclick="closeModal()" style="border:none;background:none;font-size:20px;cursor:pointer;color:#94a3b8;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">✕</button>
+    </div>
+
+    <!-- 弹窗内容 -->
+    <div style="padding:24px;display:flex;flex-direction:column;gap:20px">
+      <!-- 任务分类 -->
+      <div>
+        <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:8px">任务分类</label>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px" id="category-selector">
+          <div class="cat-option active" onclick="selectCat(this)" data-cat="cluster" style="padding:12px;border-radius:10px;border:2px solid #3b82f6;background:#eff6ff;cursor:pointer;text-align:center;transition:all 0.2s">
+            <div style="font-size:18px;margin-bottom:4px">🔧</div>
+            <div style="font-size:13px;font-weight:500;color:#1d4ed8">集群变更</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">升级、扩容、配置变更</div>
+          </div>
+          <div class="cat-option" onclick="selectCat(this)" data-cat="fault" style="padding:12px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;text-align:center;transition:all 0.2s">
+            <div style="font-size:18px;margin-bottom:4px">🚨</div>
+            <div style="font-size:13px;font-weight:500;color:#374151">故障报修</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">硬件故障、服务异常</div>
+          </div>
+          <div class="cat-option" onclick="selectCat(this)" data-cat="alert" style="padding:12px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;text-align:center;transition:all 0.2s">
+            <div style="font-size:18px;margin-bottom:4px">🔔</div>
+            <div style="font-size:13px;font-weight:500;color:#374151">告警处理</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">监控告警、阈值处理</div>
+          </div>
+          <div class="cat-option" onclick="selectCat(this)" data-cat="delivery" style="padding:12px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;text-align:center;transition:all 0.2s">
+            <div style="font-size:18px;margin-bottom:4px">🖥️</div>
+            <div style="font-size:13px;font-weight:500;color:#374151">主机交付</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px">初始化、配置、交付</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 任务标题 -->
+      <div>
+        <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:8px">任务标题</label>
+        <input id="task-title" type="text" placeholder="例如：生产集群 etcd 版本升级" style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;outline:none;transition:border 0.2s" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'" />
+      </div>
+
+      <!-- 优先级和截止日期 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:8px">优先级</label>
+          <div style="display:flex;gap:6px">
+            <button class="pri-btn" onclick="selectPri(this)" data-pri="P0" style="padding:6px 12px;border-radius:6px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s">P0</button>
+            <button class="pri-btn active" onclick="selectPri(this)" data-pri="P1" style="padding:6px 12px;border-radius:6px;border:2px solid #f97316;background:#fff7ed;cursor:pointer;font-size:12px;font-weight:600;color:#c2410c;transition:all 0.2s">P1</button>
+            <button class="pri-btn" onclick="selectPri(this)" data-pri="P2" style="padding:6px 12px;border-radius:6px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s">P2</button>
+            <button class="pri-btn" onclick="selectPri(this)" data-pri="P3" style="padding:6px 12px;border-radius:6px;border:2px solid #e5e7eb;background:#fff;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s">P3</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:8px">截止日期</label>
+          <input type="date" value="2026-06-25" style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none" />
+        </div>
+      </div>
+
+      <!-- 描述 -->
+      <div>
+        <label style="font-size:13px;font-weight:500;color:#374151;display:block;margin-bottom:8px">描述 <span style="color:#94a3b8;font-weight:400">(可选)</span></label>
+        <textarea placeholder="补充说明，如影响范围、关联工单号等..." style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;resize:vertical;min-height:72px;font-family:inherit" onfocus="this.style.borderColor='#3b82f6'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+      </div>
+
+      <!-- 加入今日聚焦 -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="add-today" checked style="width:16px;height:16px;accent-color:#3b82f6" />
+        <label for="add-today" style="font-size:13px;color:#374151">加入今日聚焦</label>
+      </div>
+    </div>
+
+    <!-- 弹窗底部 -->
+    <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;justify-content:flex-end;gap:10px;background:#f8fafc">
+      <button onclick="closeModal()" style="padding:9px 20px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:13px;cursor:pointer;color:#64748b">取消</button>
+      <button onclick="submitTask()" style="padding:9px 20px;border:none;border-radius:8px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;font-size:13px;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(59,130,246,0.3)">创建任务</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchMenu(el, page) {
+  document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function switchPage(el, page) {
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('viewTabs').style.display = page === 'board' ? 'flex' : 'none';
+}
+
+function switchView(el, view) {
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-kanban').style.display = view === 'kanban' ? 'block' : 'none';
+  document.getElementById('view-calendar').style.display = view === 'calendar' ? 'block' : 'none';
+  document.getElementById('view-list').style.display = view === 'list' ? 'block' : 'none';
+}
+
+// 弹窗相关
+function openModal() {
+  document.getElementById('task-modal').style.display = 'flex';
+  document.getElementById('task-title').focus();
+}
+
+function closeModal() {
+  document.getElementById('task-modal').style.display = 'none';
+}
+
+// 分类选择
+const catColors = { cluster: '#3b82f6', fault: '#ef4444', alert: '#f97316', delivery: '#8b5cf6' };
+const catBgs = { cluster: '#eff6ff', fault: '#fef2f2', alert: '#fff7ed', delivery: '#faf5ff' };
+
+function selectCat(el) {
+  document.querySelectorAll('.cat-option').forEach(opt => {
+    opt.style.border = '2px solid #e5e7eb';
+    opt.style.background = '#fff';
+    opt.querySelector('div:nth-child(2)').style.color = '#374151';
+  });
+  const cat = el.getAttribute('data-cat');
+  el.style.border = '2px solid ' + catColors[cat];
+  el.style.background = catBgs[cat];
+  el.querySelector('div:nth-child(2)').style.color = catColors[cat];
+}
+
+// 优先级选择
+const priColors = { P0: '#dc2626', P1: '#f97316', P2: '#eab308', P3: '#6366f1' };
+const priBgs = { P0: '#fef2f2', P1: '#fff7ed', P2: '#fefce8', P3: '#eef2ff' };
+
+function selectPri(el) {
+  document.querySelectorAll('.pri-btn').forEach(btn => {
+    btn.style.border = '2px solid #e5e7eb';
+    btn.style.background = '#fff';
+    btn.style.color = '#374151';
+  });
+  const pri = el.getAttribute('data-pri');
+  el.style.border = '2px solid ' + priColors[pri];
+  el.style.background = priBgs[pri];
+  el.style.color = priColors[pri];
+}
+
+function submitTask() {
+  const title = document.getElementById('task-title').value;
+  if (!title.trim()) {
+    document.getElementById('task-title').style.borderColor = '#ef4444';
+    document.getElementById('task-title').placeholder = '请输入任务标题...';
+    return;
+  }
+  closeModal();
+  // 模拟成功提示
+  const toast = document.createElement('div');
+  toast.textContent = '✅ 任务创建成功';
+  toast.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;box-shadow:0 4px 12px rgba(16,185,129,0.3);animation:fadeInOut 2s ease forwards';
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+  document.getElementById('task-title').value = '';
+}
+
+// ESC 关闭弹窗
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// 点击遮罩关闭
+document.getElementById('task-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+
+<style>
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+</style>
+</body>
+</html>

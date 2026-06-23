@@ -1,0 +1,60 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: personal-website
+  namespace: personal-website
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      hostname: dpystart.cloud
+    - name: https
+      port: 443
+      protocol: HTTPS
+      hostname: dpystart.cloud
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: dpystart-cloud-tls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: personal-website
+  namespace: personal-website
+spec:
+  parentRefs:
+    - name: personal-website
+      sectionName: https
+  hostnames:
+    - dpystart.cloud
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/
+      backendRefs:
+        - name: backend
+          port: 3001
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /ocr/
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: ocr
+          port: 1224
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: frontend
+          port: 80

@@ -16,11 +16,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - SCRIPTS_DIR=/data/scripts
+      - SCRIPTS_DIR=/mydata/scripts
       - PORT=3001
     volumes:
-      - scripts_data:/data/scripts
+      - /mydata/scripts:/mydata/scripts
     restart: unless-stopped
 
-volumes:
-  scripts_data:
